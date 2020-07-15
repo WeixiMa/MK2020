@@ -81,7 +81,7 @@
 
 %%
 %% end of the preamble, start of the body of the document source.
-\title{$\lambda$Kanren: Higher-order Logic Programming with Shallow Embedding}
+\title{Higher-order Logic Programming with $\lambda$Kanren}
 \begin{document}
 
 %%
@@ -178,15 +178,17 @@ a subset of higher-order hereditary Harrop formulas~\citep{miller_uniform_1991}.
 \section{Introduction}
 
 $\lambda$Kanren introduces four new operators to
-$\mu$Kanren\citep{hemann_kanren:_2013}: \texttt{tie}, \texttt{app},
-\texttt{assume-rel}, and \texttt{all}. \texttt{tie} and \texttt{app} create
-binding structures (whereas in $\mu$Kanren there are only pair structures).
-And the $\equiv$ operator recognizes $\alpha\beta$-conversions
-between binding structures. The \texttt{assume-rel} and \texttt{all} operators
+$\mu$Kanren~\citep{hemann_kanren:_2013}: \texttt{tie}, \texttt{app},
+\texttt{assume-rel}, and \texttt{all}. The opertors
+\texttt{tie} and \texttt{app} create
+binding structures. In addition, the $\equiv$ operator recognizes
+$\alpha\beta$-conversions between binding structures. The \texttt{assume-rel}
+and \texttt{all} operators
 enable more expressive reasoning with Hereditary Harrop
 formulas~\citep{miller_hereditary_1987}.
 To demonstrate $\lambda$Kanren's increment to $\mu$Kanren, we first
-review the two forms of logic behind these two languages: fohc and hohh.
+review the two forms of logic, \emph{fohc} and \emph{hohh}, behind these
+two languages.
 
 $\mu$Kanren implements First-order
 Horn clause (fohc)~\citep{apt_contributions_1982}. The grammar of \emph{Horn clause}
@@ -229,8 +231,8 @@ $(append^o\,\,xs\,\, ys\,\, zs)$ and $(\equiv\, xs\, nil)$ are atomic formulas.
 
 \begin{figure}[!tbp]
   \begin{tabular}{r r l l}
-    Goals & $G$ & $::=$ & ${\color{gray} A\,|\,G\wedge G\,|\,G\vee G\,|\,\exists x\,G\,}|\,D\supset G\,|\,\forall x\,G$\\
-    Definitions & $D$ & $::=$ & ${\color{gray} A\,|\,G \supset D\,|\,D\wedge D\,|\,\forall x\,D }$ \hspace{3cm} \\
+    Goals & $G$ & $::=$ & $A\,|\,G\wedge G\,|\,G\vee G\,|\,\exists x\,G\,|\,D\supset G\,|\,\forall x\,G$\\
+    Definitions & $D$ & $::=$ & $A\,|\,G \supset D\,|\,D\wedge D\,|\,\forall x\,D $ \hspace{3cm} \\
     Atomic Formulas & $A$ & & \\
   \end{tabular}
   \caption{Hereditary Harrop Formulas}\label{hh}
@@ -271,14 +273,14 @@ unification~\citep{miller_logic_1991} for the binding structures
 %% the global variable. The \texttt{assume-rel} operator is a macro that extends
 %% the global variable.
 
-The rest of this paper demonstrates the uses these new four operators
-and the implementation details when appropriate.
+The rest of this paper demonstrates the uses of these four operators
+and their implementation details when appropriate.
 Our implementation of $\lambda$Kanren is available at
 https://github.com/mvcccccc/MK2020.
 
 \section{Higher-order Unification}
 This section shows the power of higher-order pattern unification.
-By adopting \citet{miller_logic_1991}'s unification algorithm, $\lambda$Kanren
+By adapting \citet{miller_logic_1991}'s unification algorithm, $\lambda$Kanren
 is equipped with two new operators: \texttt{tie} and \texttt{app}.
 \texttt{tie} expressions are abstractions and \texttt{app} is the
 shorthand for application.
@@ -336,9 +338,10 @@ unification and (2) how binding structures are reified.
 '((tie (_0) (tie (_1) (app _0 _1))))
 \end{lstlisting}
 
-There is only one instantiation: \texttt{f} is a function of two inputs and
-\texttt{f} outputs an application form that applies its first input on the
-second one.
+There is only one instantiation: \texttt{f} is a function (a \texttt{Tie}
+structure) of two inputs and \texttt{f} outputs an application form
+(a \texttt{App} structure)
+that applies its first input on the second one.
 
 The internal structures, \texttt{Tie} and \texttt{App}, are reified as
 tagged lists. These tagged lists reflect their corresponded user interfaces,
@@ -350,10 +353,11 @@ To ensure decidability, $\beta$-conversion in
 \citet{miller_logic_1991}'s algorithm restricts application forms:
 when the operator of an \texttt{app} is a unification variable, its operands
 must be distinct binding variables, otherwise unification fails.
-For example, the following query has no solution because the operands of
+For example, the following query has no solution because the operands,
+the two \texttt{b}s, of
 the unification variable \texttt{f} are not distinct. In this case, with
 \texttt{f} being a function of two input \texttt{b}s, we cannot decide which
-\texttt{b} is used in the body of the function that instantiates \texttt{f}.
+\texttt{b} takes control.
 \begin{lstlisting}
 > (run 1 f
     (== (tie (a) a)
@@ -361,10 +365,10 @@ the unification variable \texttt{f} are not distinct. In this case, with
 '()
 \end{lstlisting}
 
-To enforce this pattern restriction, \citet{miller_logic_1991}'s algorithm
+To enforce this restriction, \citet{miller_logic_1991}'s algorithm
 imposes another restriction on variable scopes: the instantiation of a
 unification variable may only contain its \emph{visible} binding variables.
-A bound variable \texttt{x} is visible to a unification variable \texttt{q} if
+A binding variable \texttt{x} is visible to a unification variable \texttt{q} if
 the introduction of \texttt{x} lexically precedes that of \texttt{q}.
 Given the following example, it seems that \texttt{q} can be instantiated by
 \texttt{y}. Unfortunately, \texttt{y} is not visible to \texttt{q} and the
@@ -410,15 +414,15 @@ and then moves on to the goal \texttt{(pl-major 'Josh)}.
 \begin{lstlisting}
   > (run 1 q
   (assume-rel [(taken name class)
-                    (== 'Josh n)
-                    (== 'q class)]
-        (pl-major 'Josh)))
+               (== 'Josh name)
+               (== 'q class)]
+    (pl-major 'Josh)))
   '(B523)
 \end{lstlisting}
 
 From the implementation aspect, because the host language is lexically scoped,
 the definition of \texttt{pl-major} is fixed. This means that, the free variable
-in \texttt{pl-major}, namely \texttt{taken}, always uses the
+in the definition of \texttt{pl-major}, namely \texttt{taken}, always uses the
 original definition of Josh taking \texttt{B521} and \texttt{B522}. 
 To extend definitions on the fly, we need to create dynamic scope so that the
 free variables may use the latest, updated definitions.
@@ -426,12 +430,12 @@ free variables may use the latest, updated definitions.
 Our approach is to add an extra layer between $\lambda$Kanren and the host
 language (Racket). This extra layer redirects function definitions.
 
-We introduce two global containers,
+We introduce two global maps,
 \texttt{name->idx} and \texttt{idx->def}. Each \texttt{defrel} extends these
-two containers by creating a new index, putting the name-idx pair and the
-idx-def pair in the two containers respectively.
-The \texttt{idx->def} container is global. And the \texttt{name->idx}
-container is threaded through during the execution of
+two maps by creating a new index, putting the name-idx pair and the
+idx-def pair in the two maps respectively.
+The \texttt{idx->def} map is global. And the \texttt{name->idx}
+map is threaded through during the execution of
 a query (an invocation of a \texttt{run}).
 
 To invoke a definition, one follows \texttt{name->idx} and
@@ -443,30 +447,30 @@ For example, the user interface
   \texttt{(pl-major 'Josh)}
 
 }
-is macro-expanded to
+\noindent is macro-expanded to
 
-{\centering
-\texttt{(cdr (assv idx->def (cdr (assv name->idx 'pl-major))) 'Josh)}.
+\begin{lstlisting}
+  ((cdr (assv idx->def (cdr (assv name->idx 'pl-major))))
+   'Josh).
+\end{lstlisting}
 
-}
-
-When an \texttt{assume-rel} operator is invoked, the two containers are extended
+When an \texttt{assume-rel} operator is invoked, the two maps are extended
 again: (1) a new index is created; (2) \texttt{idx->def} contains the pair of
 the new index and the extended function; and (3) \texttt{name->idx} now has
 a new pair of the definition name and the new index, this new pair shadows the
 previous one.
 
-For example, let's use \texttt{t$_1$} for the \texttt{taken} definition
-that knows Josh has taken \texttt{B521} and \texttt{B522},
+In the previous example, let's use \texttt{t$_1$} for the \texttt{taken}
+definition that knows Josh has taken \texttt{B521} and \texttt{B522},
 use \texttt{t$_2$} for the extended \texttt{taken}
-(where we assume-rel Josh has taken \texttt{B523}), and use \texttt{p} for
-the definition of \texttt{pl-major} .
+(where we \texttt{assume-rel} Josh has taken \texttt{B523}), and use \texttt{p} for
+the definition of \texttt{pl-major}.
 With \texttt{taken} and \texttt{pl-major} first defined,
 \texttt{name->idx} is \texttt{((pl-major . 2) (taken . 1))}
 and \texttt{idx->body} is \mbox{\texttt{((2 . p) (1 . t$_1$))}}.
 Then, after assuming \texttt{(taken 'Josh q)}, the query \texttt{(pl-major 'Josh)}
 runs in an updated environment where 
-\texttt{name->idx} is \texttt{((taken . 3) (pl-major . 2) (taken . 1) )}
+\texttt{name->idx} is \texttt{((taken . 3) (pl-major . 2) (taken . 1))}
 and \texttt{idx->body} is \mbox{\texttt{((3 . $t_2$) (2 . p) (1 . t$_1$))}}.
 The more recent pair in \texttt{name->idx} shadows the previous one. And therefore,
 when \texttt{taken} is invoked, we use \texttt{t$_2$}.
@@ -474,7 +478,7 @@ when \texttt{taken} is invoked, we use \texttt{t$_2$}.
 Many interesting examples only make hypothesis on atomic formulas. And thus we
 provide the \texttt{assume} operator that is a shorter version of the
 \texttt{assume-rel} operator. Instead of any D formula, the \texttt{assume}
-operator can only take an atomic hypothesis.
+operator only takes an atomic hypothesis.
 
 As an example, we define the \texttt{eq} relation to be reflexive, transitive,
 and symmetric as follows.
@@ -553,6 +557,53 @@ The implementation of the \texttt{all} operator follows that of the
 In our implementation, we create an \texttt{all} variable as a free
 binding variable. Thus, the \texttt{all} variable cannot be unified
 with anything but itself.
+
+\section{$\lambda$Kanren as a theorem prover}
+$\lambda$Prolog is often regarded as a proof system. With hohh,
+$\lambda$Kanren suits a theorem prover as well.
+This section shows examples that use $\lambda$Kanren to prove
+intuitionistic style theorems.
+
+We start with the definition of \texttt{proved}. At this moment,
+only \texttt{'trivial} is proved.
+\begin{lstlisting}
+  (defrel (proved x)
+     (== x 'trivial))
+\end{lstlisting}
+
+Obviously, not everything is proved.
+\begin{lstlisting}
+> (run 1 g
+    (all (p)
+      (proved p)))
+'()
+> (run 1 g
+    (proved g))
+'(trivial)
+\end{lstlisting}
+
+Next, we prove the commutativity of conjuction. I.e.,
+  $\forall p,q \,\, (p \wedge q) \supset (q \wedge p)$.
+\begin{lstlisting}
+> (run 1 g
+    (all (p q)
+      (assume ((proved p) (proved q))
+        (proved q)
+        (proved p))))
+'(_0)
+\end{lstlisting}
+
+The introduction rule of disjunction can be proved:
+$\forall p,q \,\, p \supset (p \vee q)$
+\begin{lstlisting}
+  (run 1 goal
+    (all (p q)
+      (assume ((proved p))
+        (conde
+          [(proved p)]
+          [(proved q)]))))
+'(_0)
+\end{lstlisting}
 
 
 \section{conclusion}

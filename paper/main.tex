@@ -380,6 +380,19 @@ query has no solution.
 '()
 \end{lstlisting}
 
+In our implementation, the unifier extends higher-order pattern unification
+and adapt it for conventional miniKanren programming style.
+In \citet{miller_logic_1991}'s algorithm, a unification variable must be an
+operator of an application form. The oprands of the application must be distinct
+binding variables. That means, \citet{miller_logic_1991}'s algorithm reports
+unsovability when a unification variable is simply unified against a constant.
+(In fact, constants are not in the term language of
+\citet{miller_logic_1991}'s algorithm).
+
+In miniKanren, we often unify a single unification variable and a constant.
+So, it is compelling that we extend the term language and the unification variable,
+as we have done in our implementation.
+
 \section{Implicational Goals}
 This section introduces the \texttt{assume-rel} operator that implements
 implicational goals ($D \supset G$).

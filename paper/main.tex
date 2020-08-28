@@ -381,9 +381,9 @@ query has no solution.
 \end{lstlisting}
 
 In our implementation, the unifier extends higher-order pattern unification
-and adapt it for conventional miniKanren programming style.
+and adapts it for conventional miniKanren programming style.
 In \citet{miller_logic_1991}'s algorithm, a unification variable must be an
-operator of an application form. The oprands of the application must be distinct
+operator of an application form. The operands of the application must be distinct
 binding variables. That means, \citet{miller_logic_1991}'s algorithm reports
 unsovability when a unification variable is simply unified against a constant.
 (In fact, constants are not in the term language of
